@@ -8,6 +8,11 @@ import (
 
 func Start() {
 	config := config.Get()
+	if config.Debug {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.Default()
 
 	router.Run(fmt.Sprintf("%s:%d", config.Address, config.Port))

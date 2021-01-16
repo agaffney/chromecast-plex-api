@@ -5,8 +5,11 @@ import (
 )
 
 type Config struct {
-	Address string `default:"0.0.0.0"`
-	Port    int    `default:"8080"`
+	Address   string `default:"0.0.0.0"`
+	Port      int    `default:"8080"`
+	Debug     bool
+	PlexUrl   string
+	PlexToken string
 }
 
 var config *Config

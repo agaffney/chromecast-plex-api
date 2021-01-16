@@ -14,7 +14,7 @@ $(BINARY): $(shell find -name '*.go')
 .PHONY: run test
 
 run:
-	go run main.go
+	DEBUG=1 go run main.go
 
 test:
 	go test -v ./...
