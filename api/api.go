@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/agaffney/chromecast-plex-api/chromecast"
 	"github.com/agaffney/chromecast-plex-api/config"
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,14 @@ func Start() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	router := gin.Default()
-
+	configureRouter(router)
 	router.Run(fmt.Sprintf("%s:%d", config.Address, config.Port))
+}
+
+func configureRouter(g *gin.Engine) {
+	g.GET("/devices/", handleListDevices)
+}
+
+func handleListDevices(c *gin.Context) {
+	c.JSON(200, chromecast.GetDevices())
 }

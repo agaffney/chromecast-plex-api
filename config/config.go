@@ -5,11 +5,14 @@ import (
 )
 
 type Config struct {
-	Address   string `default:"0.0.0.0"`
-	Port      int    `default:"8080"`
-	Debug     bool
-	PlexUrl   string
-	PlexToken string
+	Address          string `default:"0.0.0.0"`
+	Port             int    `default:"8080"`
+	Debug            bool
+	PlexUrl          string
+	PlexToken        string
+	CastInterface    string
+	CastDnsTimeout   int `default:"5"`
+	CastScanInterval int `default:"60"`
 }
 
 var config *Config
