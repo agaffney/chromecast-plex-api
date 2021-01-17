@@ -6,7 +6,9 @@ import (
 )
 
 func handleRescan(c *gin.Context) {
-	chromecast.Scan()
+	go func() {
+		chromecast.Scan()
+	}()
 	c.JSON(200, gin.H{"message": "rescan triggered"})
 }
 
@@ -16,12 +18,23 @@ func handleListDevices(c *gin.Context) {
 
 func handleGetDevice(c *gin.Context) {
 	uuid := c.Param("uuid")
-	devices := chromecast.GetDevices()
-	for _, device := range devices {
-		if device.UUID == uuid {
-			c.JSON(200, device)
-			return
-		}
+	device := chromecast.GetDevice(uuid)
+	if device == nil {
+		c.JSON(404, gin.H{"error": "not found"})
+		return
 	}
-	c.JSON(404, gin.H{"error": "not found"})
+	c.JSON(200, device)
+}
+
+func handleLaunch(c *gin.Context) {
+	uuid := c.Param("uuid")
+	device := chromecast.GetDevice(uuid)
+	if device == nil {
+		c.JSON(404, gin.H{"error": "not found"})
+		return
+	}
+	if err := device.Launch(); err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+	}
+	c.JSON(200, gin.H{"message": "launch triggered"})
 }

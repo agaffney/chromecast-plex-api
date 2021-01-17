@@ -20,6 +20,7 @@ func Start() {
 
 func configureRouter(g *gin.Engine) {
 	g.GET("/devices/", handleListDevices)
-	g.GET("/devices/:uuid", handleGetDevice)
 	g.POST("/devices/rescan", handleRescan)
+	g.GET("/device/:uuid/", handleGetDevice)
+	g.POST("/device/:uuid/launch", handleLaunch)
 }
