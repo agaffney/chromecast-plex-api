@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"github.com/agaffney/chromecast-plex-api/chromecast"
 	"github.com/agaffney/chromecast-plex-api/config"
 	"github.com/gin-gonic/gin"
 )
@@ -21,8 +20,6 @@ func Start() {
 
 func configureRouter(g *gin.Engine) {
 	g.GET("/devices/", handleListDevices)
-}
-
-func handleListDevices(c *gin.Context) {
-	c.JSON(200, chromecast.GetDevices())
+	g.GET("/devices/:uuid", handleGetDevice)
+	g.POST("/devices/rescan", handleRescan)
 }
