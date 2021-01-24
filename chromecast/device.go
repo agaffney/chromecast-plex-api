@@ -3,10 +3,9 @@ package chromecast
 import (
 	"context"
 	"encoding/json"
-	"github.com/buger/jsonparser"
 	"github.com/vishen/go-chromecast/cast"
 	castproto "github.com/vishen/go-chromecast/cast/proto"
-	//"log"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -89,11 +88,36 @@ func (d *Device) sendAndWaitDefaultRecv(payload cast.Payload) (*castproto.CastMe
 
 func (d *Device) recvMessages() {
 	for msg := range d.recvMsgChan {
-		requestId, err := jsonparser.GetInt([]byte(*msg.PayloadUtf8), "requestId")
-		if err == nil {
-			if resultChan, ok := d.resultChanMap[int(requestId)]; ok {
-				resultChan <- msg
-				continue
+		payloadHeader := cast.PayloadHeader{}
+		if err := json.Unmarshal([]byte(*msg.PayloadUtf8), &payloadHeader); err != nil {
+			log.Printf("failed to unmarshal payload header: %s", err)
+			continue
+		}
+		if resultChan, ok := d.resultChanMap[int(payloadHeader.RequestId)]; ok {
+			resultChan <- msg
+			continue
+		} else {
+			switch payloadHeader.Type {
+			case "RECEIVER_STATUS":
+				var response cast.ReceiverStatusResponse
+				if err := json.Unmarshal([]byte(*msg.PayloadUtf8), &response); err != nil {
+					log.Printf("failed to unmarshal receiver status payload: %s", err)
+					continue
+				}
+				if err := d.updateReceiverStatus(&response); err != nil {
+					log.Printf("failed to update receiver status: %s", err)
+					continue
+				}
+			case "MEDIA_STATUS":
+				var response cast.MediaStatusResponse
+				if err := json.Unmarshal([]byte(*msg.PayloadUtf8), &response); err != nil {
+					log.Printf("failed to unmarshal media status payload: %s", err)
+					continue
+				}
+				if err := d.updateMediaStatus(&response); err != nil {
+					log.Printf("failed to update media status: %s", err)
+					continue
+				}
 			}
 		}
 	}
@@ -109,6 +133,20 @@ func (d *Device) getReceiverStatus() (*cast.ReceiverStatusResponse, error) {
 		return nil, err
 	}
 	return &response, nil
+}
+
+func (d *Device) updateReceiverStatus(status *cast.ReceiverStatusResponse) error {
+	// There may be more than one app, so use the last one
+	for _, app := range status.Status.Applications {
+		d.application = &app
+	}
+	d.volumeReceiver = &status.Status.Volume
+	return nil
+}
+
+func (d *Device) updateMediaStatus(status *cast.MediaStatusResponse) error {
+	log.Printf("media status = %#v", status)
+	return nil
 }
 
 func (d *Device) Connect() error {
@@ -144,6 +182,9 @@ func (d *Device) Launch() error {
 	if _, err := d.sendAndWaitDefaultRecv(payload); err != nil {
 		return err
 	}
+	if err := d.Update(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -160,6 +201,9 @@ func (d *Device) Reset() error {
 	if _, err := d.sendAndWaitDefaultRecv(payload); err != nil {
 		return err
 	}
+	if err := d.Update(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -173,10 +217,5 @@ func (d *Device) Update() error {
 	if err != nil {
 		return err
 	}
-	// There may be more than one app, so use the last one
-	for _, app := range recvStatus.Status.Applications {
-		d.application = &app
-	}
-	d.volumeReceiver = &recvStatus.Status.Volume
-	return nil
+	return d.updateReceiverStatus(recvStatus)
 }

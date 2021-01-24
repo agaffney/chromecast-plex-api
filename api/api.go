@@ -23,4 +23,6 @@ func configureRouter(g *gin.Engine) {
 	g.POST("/devices/rescan", handleRescan)
 	g.GET("/device/:uuid/", handleGetDevice)
 	g.POST("/device/:uuid/launch", handleLaunch)
+	g.POST("/device/:uuid/update", handleUpdate)
+	g.POST("/device/:uuid/reset", handleReset)
 }

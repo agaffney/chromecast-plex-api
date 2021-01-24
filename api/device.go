@@ -39,3 +39,31 @@ func handleLaunch(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{"message": "launch triggered"})
 }
+
+func handleUpdate(c *gin.Context) {
+	uuid := c.Param("uuid")
+	device := chromecast.GetDevice(uuid)
+	if device == nil {
+		c.JSON(404, gin.H{"error": "not found"})
+		return
+	}
+	if err := device.Update(); err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "update triggered"})
+}
+
+func handleReset(c *gin.Context) {
+	uuid := c.Param("uuid")
+	device := chromecast.GetDevice(uuid)
+	if device == nil {
+		c.JSON(404, gin.H{"error": "not found"})
+		return
+	}
+	if err := device.Reset(); err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "reset triggered"})
+}
