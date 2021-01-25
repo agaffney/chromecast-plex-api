@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/agaffney/chromecast-plex-api/chromecast"
+	"github.com/agaffney/chromecast-plex-api/chromecast/plex"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +34,8 @@ func handleLaunch(c *gin.Context) {
 		c.JSON(404, gin.H{"error": "not found"})
 		return
 	}
-	if err := device.Launch(); err != nil {
+	controller := plex.NewController(device)
+	if err := controller.Launch(); err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}

@@ -1,4 +1,4 @@
-package chromecast
+package device
 
 import (
 	"context"
@@ -23,9 +23,6 @@ const (
 	namespaceConn  = "urn:x-cast:com.google.cast.tp.connection"
 	namespaceRecv  = "urn:x-cast:com.google.cast.receiver"
 	namespaceMedia = "urn:x-cast:com.google.cast.media"
-
-	plexAppId     = "9AC194DC"
-	plexNamespace = "urn:x-cast:plex"
 )
 
 type Device struct {
@@ -45,7 +42,7 @@ type Device struct {
 	volumeReceiver *cast.Volume
 }
 
-func (d *Device) send(payload cast.Payload, sourceID, destinationID, namespace string) (int, error) {
+func (d *Device) Send(payload cast.Payload, sourceID, destinationID, namespace string) (int, error) {
 	d.requestIdMutex.Lock()
 	d.requestId += 1
 	requestId := d.requestId
@@ -54,8 +51,8 @@ func (d *Device) send(payload cast.Payload, sourceID, destinationID, namespace s
 	return requestId, d.conn.Send(d.requestId, payload, sourceID, destinationID, namespace)
 }
 
-func (d *Device) sendAndWait(payload cast.Payload, sourceID, destinationID, namespace string) (*castproto.CastMessage, error) {
-	requestId, err := d.send(payload, sourceID, destinationID, namespace)
+func (d *Device) SendAndWait(payload cast.Payload, sourceID, destinationID, namespace string) (*castproto.CastMessage, error) {
+	requestId, err := d.Send(payload, sourceID, destinationID, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +79,8 @@ func (d *Device) sendAndWait(payload cast.Payload, sourceID, destinationID, name
 	}
 }
 
-func (d *Device) sendAndWaitDefaultRecv(payload cast.Payload) (*castproto.CastMessage, error) {
-	return d.sendAndWait(payload, defaultSender, defaultRecv, namespaceRecv)
+func (d *Device) SendAndWaitDefaultRecv(payload cast.Payload) (*castproto.CastMessage, error) {
+	return d.SendAndWait(payload, defaultSender, defaultRecv, namespaceRecv)
 }
 
 func (d *Device) recvMessages() {
@@ -124,7 +121,7 @@ func (d *Device) recvMessages() {
 }
 
 func (d *Device) getReceiverStatus() (*cast.ReceiverStatusResponse, error) {
-	apiMessage, err := d.sendAndWaitDefaultRecv(&cast.GetStatusHeader)
+	apiMessage, err := d.SendAndWaitDefaultRecv(&cast.GetStatusHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +154,7 @@ func (d *Device) Connect() error {
 	if err := d.conn.Start(d.Address.String(), d.Port); err != nil {
 		return err
 	}
-	if _, err := d.send(&cast.ConnectHeader, defaultSender, defaultRecv, namespaceConn); err != nil {
+	if _, err := d.Send(&cast.ConnectHeader, defaultSender, defaultRecv, namespaceConn); err != nil {
 		return err
 	}
 	if err := d.Update(); err != nil {
@@ -166,20 +163,20 @@ func (d *Device) Connect() error {
 	return nil
 }
 
-func (d *Device) Launch() error {
+func (d *Device) Launch(appId string) error {
 	if d.conn == nil {
 		if err := d.Connect(); err != nil {
 			return err
 		}
 	}
-	if d.application != nil && d.application.AppId == plexAppId {
+	if d.application != nil && d.application.AppId == appId {
 		return nil
 	}
 	payload := &cast.LaunchRequest{
 		PayloadHeader: cast.LaunchHeader,
-		AppId:         plexAppId,
+		AppId:         appId,
 	}
-	if _, err := d.sendAndWaitDefaultRecv(payload); err != nil {
+	if _, err := d.SendAndWaitDefaultRecv(payload); err != nil {
 		return err
 	}
 	if err := d.Update(); err != nil {
@@ -198,7 +195,7 @@ func (d *Device) Reset() error {
 		PayloadHeader: cast.LaunchHeader,
 		AppId:         defaultChromecastAppId,
 	}
-	if _, err := d.sendAndWaitDefaultRecv(payload); err != nil {
+	if _, err := d.SendAndWaitDefaultRecv(payload); err != nil {
 		return err
 	}
 	if err := d.Update(); err != nil {

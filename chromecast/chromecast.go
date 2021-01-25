@@ -2,6 +2,7 @@ package chromecast
 
 import (
 	"context"
+	"github.com/agaffney/chromecast-plex-api/chromecast/device"
 	"github.com/agaffney/chromecast-plex-api/config"
 	castdns "github.com/vishen/go-chromecast/dns"
 	"log"
@@ -10,13 +11,13 @@ import (
 	"time"
 )
 
-var devices []*Device
+var devices []*device.Device
 var scanMutex sync.Mutex
 var cfg *config.Config
 
 func StartScanning() {
 	cfg = config.Get()
-	devices = make([]*Device, 0)
+	devices = make([]*device.Device, 0)
 	go func() {
 		for {
 			Scan()
@@ -52,7 +53,7 @@ func Scan() {
 		}
 		if !foundDevice {
 			timeNow := time.Now()
-			deviceEntry := &Device{
+			deviceEntry := &device.Device{
 				Device:     d.Device,
 				DeviceName: d.DeviceName,
 				Address:    d.AddrV4,
@@ -67,11 +68,11 @@ func Scan() {
 	scanMutex.Unlock()
 }
 
-func GetDevices() []*Device {
+func GetDevices() []*device.Device {
 	return devices
 }
 
-func GetDevice(uuid string) *Device {
+func GetDevice(uuid string) *device.Device {
 	for _, device := range devices {
 		if device.UUID == uuid {
 			return device
