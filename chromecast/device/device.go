@@ -42,12 +42,17 @@ type Device struct {
 	volumeReceiver *cast.Volume
 }
 
+func (d *Device) GetApplication() *cast.Application {
+	return d.application
+}
+
 func (d *Device) Send(payload cast.Payload, sourceID, destinationID, namespace string) (int, error) {
 	d.requestIdMutex.Lock()
 	d.requestId += 1
 	requestId := d.requestId
 	d.requestIdMutex.Unlock()
 	payload.SetRequestId(requestId)
+	log.Printf("Send(): payload = %#v, sourceID = %s, destinationID = %s, namespace = %s", payload, sourceID, destinationID, namespace)
 	return requestId, d.conn.Send(d.requestId, payload, sourceID, destinationID, namespace)
 }
 
@@ -90,6 +95,8 @@ func (d *Device) recvMessages() {
 			log.Printf("failed to unmarshal payload header: %s", err)
 			continue
 		}
+		log.Printf("recvMessages(): namespace = %s, sourceId = %s, destinationId = %s", *msg.Namespace, *msg.SourceId, *msg.DestinationId)
+		log.Printf("recvMessages(): PayloadType = %s, PayloadUtf8 = %s", *msg.PayloadType, *msg.PayloadUtf8)
 		if resultChan, ok := d.resultChanMap[int(payloadHeader.RequestId)]; ok {
 			resultChan <- msg
 			continue
@@ -169,17 +176,22 @@ func (d *Device) Launch(appId string) error {
 			return err
 		}
 	}
-	if d.application != nil && d.application.AppId == appId {
-		return nil
+	// Launch specified app if it's not already running
+	if d.application == nil || d.application.AppId != appId {
+		payload := &cast.LaunchRequest{
+			PayloadHeader: cast.LaunchHeader,
+			AppId:         appId,
+		}
+		if _, err := d.SendAndWaitDefaultRecv(payload); err != nil {
+			return err
+		}
 	}
-	payload := &cast.LaunchRequest{
-		PayloadHeader: cast.LaunchHeader,
-		AppId:         appId,
-	}
-	if _, err := d.SendAndWaitDefaultRecv(payload); err != nil {
+	// Update receiver status
+	if err := d.Update(); err != nil {
 		return err
 	}
-	if err := d.Update(); err != nil {
+	// Connect channel to app
+	if _, err := d.Send(&cast.ConnectHeader, defaultSender, d.GetApplication().TransportId, namespaceConn); err != nil {
 		return err
 	}
 	return nil

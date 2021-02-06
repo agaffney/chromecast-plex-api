@@ -25,4 +25,5 @@ func configureRouter(g *gin.Engine) {
 	g.POST("/device/:uuid/launch", handleLaunch)
 	g.POST("/device/:uuid/update", handleUpdate)
 	g.POST("/device/:uuid/reset", handleReset)
+	g.POST("/device/:uuid/playback/next", handlePlaybackNext)
 }

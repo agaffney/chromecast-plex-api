@@ -2,6 +2,7 @@ package plex
 
 import (
 	"github.com/agaffney/chromecast-plex-api/chromecast/device"
+	"github.com/vishen/go-chromecast/cast"
 )
 
 const (
@@ -19,10 +20,14 @@ func NewController(device *device.Device) *Controller {
 }
 
 func (c *Controller) Launch() error {
-	return c.device.Launch(plexAppId)
+	if err := c.device.Launch(plexAppId); err != nil {
+		return err
+	}
+	_, err := c.device.Send(&cast.GetStatusHeader, "sender-0", c.device.GetApplication().TransportId, plexNamespace)
+	return err
 }
 
 func (c *Controller) Next() error {
-	// TODO: do something
-	return nil
+	_, err := c.device.Send(&cast.PayloadHeader{Type: "NEXT"}, "sender-0", c.device.GetApplication().TransportId, plexNamespace)
+	return err
 }
