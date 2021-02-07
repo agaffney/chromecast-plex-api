@@ -228,3 +228,39 @@ func (d *Device) Update() error {
 	}
 	return d.updateReceiverStatus(recvStatus)
 }
+
+func (d *Device) SetVolumeLevel(level float32) error {
+	if level > 1 {
+		level = 1
+	} else if level < 0 {
+		level = 0
+	}
+	volumePayload := &cast.SetVolume{
+		PayloadHeader: cast.VolumeHeader,
+		Volume: cast.Volume{
+			Level: level,
+			Muted: false,
+		},
+	}
+	if _, err := d.Send(volumePayload, defaultSender, defaultRecv, namespaceRecv); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Device) SetVolumeMuted(muted bool) error {
+	volumePayload := &cast.SetVolume{
+		PayloadHeader: cast.VolumeHeader,
+		Volume: cast.Volume{
+			Muted: muted,
+		},
+	}
+	if _, err := d.Send(volumePayload, defaultSender, defaultRecv, namespaceRecv); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Device) GetVolume() *cast.Volume {
+	return d.volumeReceiver
+}
