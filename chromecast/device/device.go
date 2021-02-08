@@ -28,7 +28,7 @@ const (
 type Device struct {
 	UUID           string     `json:"uuid"`
 	Device         string     `json:"device"`
-	DeviceName     string     `json:"name"`
+	Name           string     `json:"name"`
 	Address        net.IP     `json:"address"`
 	Port           int        `json:"port"`
 	FirstSeen      *time.Time `json:"first_seen"`

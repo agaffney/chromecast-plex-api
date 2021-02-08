@@ -54,13 +54,13 @@ func Scan() {
 		if !foundDevice {
 			timeNow := time.Now()
 			deviceEntry := &device.Device{
-				Device:     d.Device,
-				DeviceName: d.DeviceName,
-				Address:    d.AddrV4,
-				Port:       d.Port,
-				UUID:       d.UUID,
-				FirstSeen:  &timeNow,
-				LastSeen:   &timeNow,
+				Device:    d.Device,
+				Name:      d.DeviceName,
+				Address:   d.AddrV4,
+				Port:      d.Port,
+				UUID:      d.UUID,
+				FirstSeen: &timeNow,
+				LastSeen:  &timeNow,
 			}
 			devices = append(devices, deviceEntry)
 		}

@@ -8,10 +8,10 @@ type Config struct {
 	Address          string `default:"0.0.0.0"`
 	Port             int    `default:"8080"`
 	Debug            bool
-	PlexUrl          string
-	PlexToken        string
+	PlexUrl          string `envconfig:"PLEX_URL"`
+	PlexToken        string `envconfig:"PLEX_TOKEN"`
 	CastInterface    string
-	CastDnsTimeout   int `default:"5"`
+	CastDnsTimeout   int `default:"60"`
 	CastScanInterval int `default:"60"`
 }
 
